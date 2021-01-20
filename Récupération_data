@@ -1,0 +1,23 @@
+import numpy as np
+import pandas_datareader as pdr
+
+
+
+def get_rendements(stocks,début,fin): #date=yyyy-mm-dd en string
+    prix=pdr.get_data_yahoo(stocks,start=début,end=fin)['Adj Close'] 
+    returns=prix.pct_change()
+    logrdt=np.log(1+returns)*100
+    logrdt=logrdt.iloc[1:]
+    returns=returns.iloc[1:]
+    prix=prix.iloc[1:]
+    return  returns, prix, logrdt
+
+stocks=['AAPL','AXP','BA', 'CAT', 'CSCO', 'CVX','DD','DIS','GE','HD','HPQ','IBM','INTC','JNJ','JPM','KO','MCD','MMM','MRK','MSFT','NKE','PFE','PG','RTX','T','TRV','UNH','VZ','WMT','XOM']
+début='2010-03-11'
+fin='2014-12-31'
+
+
+output=get_rendements(stocks, début, fin)
+rendements=output[0]
+prix=output[1]
+rdt_log=output[2]
