@@ -10,7 +10,7 @@ start_date = "2007-01-03"
 end_date = "2014-12-31"
 my_path = "C:\\Users\\MV\\Desktop\\Projet Quant\\"
 input_assets_path = "C:\\Users\\MV\\Documents\\GitHub\\VaR_Quant_Reg\\Assets\\"
-output_path = "C:\\Users\\MV\\Documents\\GitHub\\VaR_Quant_Reg\\Results_RQ\\"
+output_path = "C:\\Users\\MV\\Documents\\GitHub\\VaR_Quant_Reg\\Results RQ\\"
   
 rdt <- read.csv(paste(my_path,"rdt.csv", sep=""), header=TRUE, row.names="Date")
 #%%%%%%%%%%%%%
@@ -19,21 +19,19 @@ start_index = grep(start_date, row.names(rdt))
 end_index = grep(end_date, row.names(rdt))
 nbr_prediction = end_index - start_index +1
 
-var_prediction <- data.frame(matrix(ncol = 8, nrow = nbr_prediction))
-var_col_names <- c("Date","lasso_bic", "ridge_cv", "elastic_cv", "lasso_cv",
-                   "ridge_fix", "elastic_fix", 'lasso_fix')
-colnames(var_prediction) <- var_col_names
 n = 1
 
 # on crée nos lambdas sur echelle de 10
 log_values <- cbind(0.1,1,10,100,1000,10000,100000)
-nb_steps = 13
+nb_steps = 16
 lambdas = seq(0,1,1/nb_steps)*0.01
 
 for (i in 1:length(log_values)){
   temp = seq(0,1,1/(nb_steps))*log_values[i]
   lambdas = append(lambdas, temp[2:length(temp)])
 }
+
+browser()
 
 # on itere sur nos 4 rolling windows
 for (RW in rolling_windows){
@@ -59,7 +57,7 @@ for (RW in rolling_windows){
   asset_index = 1
   for(asset in colnames(rdt)){
     
-    var = read.csv(paste(input_assets_path,"models_asset_",(asset_index-1)))
+    var = read.csv(paste(input_assets_path,"models_asset_",(asset_index-1),".csv", sep=""))
     # les matrices var_predictions comprennent nos prévisions pour cet actif
     # avec en row les dates et en col les differents lambdas
     var_prediction_lasso = matrix(,nrow = nbr_prediction, ncol = length(lambdas))
@@ -143,20 +141,27 @@ for (RW in rolling_windows){
   tick_loss_per_lambda_elastic_per_RW[index_RW,] = colMeans(tick_loss_per_lambda_elastic)
   
   
-  write.csv(var_prediction_all_asset_lasso_bic, paste(output_path,"Lasso_bic_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_ridge_cv, paste(output_path,"Ridge_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_elastic_cv, paste(output_path,"ELastic_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_lasso_cv, paste(output_path,"Lasso_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_ridge_fix, paste(output_path,"Ridge_fix_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_elastic_fix, paste(output_path,"Elastic_fix_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_lasso_fix, paste(output_path,"Lasso_fix_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_lasso_bic, paste(output_path,"Lasso_bic_",
+                                                      toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_ridge_cv, paste(output_path,"Ridge_cv_",
+                                                     toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_elastic_cv, paste(output_path,"ELastic_cv_",
+                                                       toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_lasso_cv, paste(output_path,"Lasso_cv_",
+                                                     toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_ridge_fix, paste(output_path,"Ridge_fix_",
+                                                      toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_elastic_fix, paste(output_path,"Elastic_fix_",
+                                                        toString(RW),"RW.csv", sep=""))
+  write.csv(var_prediction_all_asset_lasso_fix, paste(output_path,"Lasso_fix_",
+                                                      toString(RW),"RW.csv", sep=""))
   
   index_RW = index_RW + 1
 }
 
-write.csv(tick_loss_per_lambda_lasso_per_RW, paste(output_path,"avg_tick_loss_lasso"))
-write.csv(tick_loss_per_lambda_ridge_per_RW, paste(output_path,"avg_tick_loss_ridge"))
-write.csv(tick_loss_per_lambda_elastic_per_RW, paste(output_path,"avg_tick_loss_elastic"))
+write.csv(tick_loss_per_lambda_lasso_per_RW, paste(output_path,"avg_tick_loss_lasso.csv", sep=""))
+write.csv(tick_loss_per_lambda_ridge_per_RW, paste(output_path,"avg_tick_loss_ridge.csv", sep=""))
+write.csv(tick_loss_per_lambda_elastic_per_RW, paste(output_path,"avg_tick_loss_elastic.csv", sep=""))
 
 
 tick_loss<-function(rdt, var, var_quantile){
