@@ -1,0 +1,80 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+'Résultats de Kupiec stockés dans des listes'
+valeurs1 = [[0.01234,0.01],[0.02,0.03], [0.006,0.015]] #'correspond à une méthode et les trois listes correspondent chacunes à une période'
+valeurs2 = [[0.01,0.025],[0.02,0.025], [0.026,0.015]]
+valeurs3 = [[0.01,0.025],[0.02,0.03], [0.04,0.012]]
+valeurs4=[[0.01,0.025],[0.02,0.03], [0.04,0.012]]
+
+
+val=[valeurs1,valeurs2, valeurs3, valeurs4, valeurs4, valeurs1, valeurs2]
+
+'nombre de jour période 1'
+p_un=1764
+'nombre de jour période 2'
+p_deux=756
+'nombre de jour période 3'
+p_trois=756
+
+'inputs pour le nom de chaque méthode'
+name=['1', '2','3','4','5','6','7']
+
+def graph_kupiec(val,p_un,p_deux,p_trois,name):
+    
+    values=np.ones(2)*0.005
+    d=len(val)
+    io=0
+    st=0
+    plt.figure(figsize=(10, 1.8))
+
+    for i in val:
+    
+        un=plt.subplot(d,3,io+1)
+        plt.scatter(i[0], values)
+        plt.xticks([0.01,0.02,0.03])
+        plt.yticks([])
+        plt.xlim(0, 0.04)
+        plt.ylim(0, 0.01)
+        plt.axvline(x=0.01-2.58*(0.01*0.99/p_un)**0.5,color='black')
+        plt.axvline(x=0.01+2.58*(0.01*0.99/p_un)**0.5,color='black')
+        plt.axvline(x=0.01,color='grey')
+        
+        if io==0:
+            plt.title('1ere période')
+        plt.ylabel(name[st], fontsize=5)
+            
+        deux=plt.subplot(d,3,io+2)
+            
+        plt.scatter(i[1], values)
+        plt.xticks([0.01,0.02,0.03])
+        plt.yticks([])
+        plt.xlim(0, 0.04)
+        plt.axvline(x=0.01-2.58*(0.01*0.99/p_deux)**0.5,color='black')
+        plt.axvline(x=0.01+2.58*(0.01*0.99/p_deux)**0.5,color='black')
+        plt.axvline(x=0.01,color='grey')
+
+        if io==0:
+            plt.title('2ème période')
+        
+    
+        trois=plt.subplot(d,3,io+3)
+
+        plt.scatter(i[2], values)
+    
+        if io==0:
+            plt.title('3ème période')
+        plt.xticks([0.01,0.02,0.03])
+        plt.yticks([])
+        plt.xlim(0, 0.04)
+        plt.axvline(x=0.01-2.58*(0.01*0.99/p_trois)**0.5,color='black')
+        plt.axvline(x=0.01+2.58*(0.01*0.99/p_trois)**0.5,color='black')
+        plt.axvline(x=0.01,color='grey')
+        
+        io=io+3
+        st=st+1
+    
+
+    plt.show()
+ 
+graph_kupiec(val,p_un,p_deux,p_trois,name)

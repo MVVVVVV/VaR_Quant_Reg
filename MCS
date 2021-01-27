@@ -1,0 +1,14 @@
+from arch.bootstrap import MCS
+
+# Limit the size of the set
+losses = model_losses.iloc[:, ::20]
+mcs = MCS(losses, size=0.10)
+mcs.compute()
+print('MCS P-values')
+print(mcs.pvalues)
+print('Included')
+included = mcs.included
+print([model.split('.')[1] for model in included])
+print('Excluded')
+excluded = mcs.excluded
+print([model.split('.')[1] for model in excluded])

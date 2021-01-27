@@ -1,0 +1,184 @@
+
+import numpy as np
+import pandas_datareader as pdr
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import pandas as pd
+
+def get_rendements(stocks,début,fin): #date=yyyy-mm-dd en string
+    prix=pdr.get_data_yahoo(stocks,start=début,end=fin)['Adj Close'] 
+    returns=prix.pct_change()
+    logrdt=np.log(1+returns)*100
+    logrdt=logrdt.iloc[1:]
+    returns=returns.iloc[1:]
+    prix=prix.iloc[1:]
+    return  returns, prix, logrdt
+
+stock=['AAPL','AXP','BA']
+début='2006-01-03'
+fin='2006-01-07'
+
+stocks=['AXP','AAPL','BA']
+stockss=['AXP','BA','AAPL']
+
+
+outputt=get_rendements(stock, début, fin)
+rendements=outputt[0]
+prix=outputt[1]
+rdt_log=outputt[2]
+
+outputt=get_rendements(stock, début, fin)
+rdt_logs=outputt[2]
+
+outputt=get_rendements(stock, début, fin)
+rdt_logss=outputt[2]
+
+# Fonction qui calcule le pourcentage de fois ou un rendement a été inférieur à la VAR
+# La fonction crée 3 graphiques pour les trois périodes
+# Les inputs sont des data frame : var_1 correspond aux VAR forecast de la 1ère période
+# rdt_log_1 correspond aux rendements de la période 1
+# même principe pour le reste 
+# name correspond au nom de la méthode utilisé
+def kupiec(var_1,rdt_log_1,var_2,rdt_log_2,var_3,rdt_log_3,name):
+    
+    '''c'est la partie 1 du graphique'''
+    var=var_1
+    rdt_log=rdt_log_1
+    
+    resu=[]
+    p_un=rdt_log.shape[0]
+    for j in range(0,len(rdt_log.columns)): #on s'interesse à tous les actifs
+        rdt_logs=rdt_log.iloc[:,j]
+        var_s=var.iloc[:,j]
+        a=0
+        for i in range(0,p_un):
+            varr=var_s.iloc[i]
+            rdt=rdt_logs.iloc[i]
+
+            g_rdt=float(rdt)
+            g_var=float(varr)
+            #pour savoir si la Var a joué son rôle ou pas
+            if g_var>g_rdt:
+                a=a+1
+
+        final=a/p_un
+        resu.append(final)
+    
+    val=resu
+    
+    values=np.ones(len(rdt_log.columns))*0.005 #ici c'est pour tous les actifs
+    plt.figure(figsize=(10, 0.5))
+    un=plt.subplot(1,3,1)
+    plt.scatter(val, values, s=20)
+    plt.xticks([0.01,0.02,0.03])
+    plt.yticks([])
+    plt.xlim(0, 0.04)
+    plt.ylim(0, 0.01)
+    plt.axvline(x=0.01-2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01+2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01,color='grey')
+    plt.title('période du 03.01.2007 au 31.12.2014',fontsize=8)
+    plt.ylabel(name, fontsize=8)
+    
+    '''c'est la partie 2 du graphique'''
+    #c'est quasiement le même code que pour la première partie du graphique
+    var=var_2
+    rdt_log=rdt_log_2
+    
+    resu=[]
+    p_un=rdt_log.shape[0]
+    for j in range(0,len(rdt_log.columns)): 
+        rdt_logs=rdt_log.iloc[:,j]
+        
+        var_s=var.iloc[:,j]
+        a=0
+        for i in range(0,p_un):
+            varr=var_s.iloc[i]
+            rdt=rdt_logs.iloc[i]
+
+            g_rdt=float(rdt)
+            g_var=float(varr)
+            
+            if g_var>g_rdt:
+                a=a+1
+
+        final=a/p_un
+        resu.append(final)
+    val=resu
+    values=np.ones(len(rdt_log.columns))*0.005 
+
+
+    deux=plt.subplot(1,3,2)
+    plt.scatter(val, values, s=20)
+    plt.xticks([0.01,0.02,0.03])
+    plt.yticks([])
+    plt.xlim(0, 0.04)
+    plt.ylim(0, 0.01)
+    plt.axvline(x=0.01-2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01+2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01,color='grey')
+    plt.title('période du 03.01.2007 au 31.12.2010',fontsize=8)
+    
+    
+    var=var_3
+    rdt_log=rdt_log_3
+    
+    resu=[]
+    p_un=rdt_log.shape[0]
+    for j in range(0,len(rdt_log.columns)): 
+        rdt_logs=rdt_log.iloc[:,j]
+        
+        var_s=var.iloc[:,j]
+        a=0
+        for i in range(0,p_un):
+            varr=var_s.iloc[i]
+            rdt=rdt_logs.iloc[i]
+
+            g_rdt=float(rdt)
+            g_var=float(varr)
+            
+            if g_var>g_rdt:
+                a=a+1
+        final=a/p_un
+        resu.append(final)
+    val=resu
+    
+    
+    '''c'est la partie 3 du graphique'''
+    values=np.ones(len(rdt_log.columns))*0.005 
+
+    trois=plt.subplot(1,3,3)
+    plt.scatter(val, values, s=20)
+    plt.xticks([0.01,0.02,0.03])
+    plt.yticks([])
+    plt.xlim(0, 0.04)
+    plt.ylim(0, 0.01)
+    plt.axvline(x=0.01-2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01+2.58*(0.01*0.99/p_un)**0.5,color='black')
+    plt.axvline(x=0.01,color='grey')
+    plt.title('période du 03.01.2011 au 31.12.2014',fontsize=8)
+
+    
+    plt.show()
+ 
+
+
+ddd=np.array([[ 0,  0,  0],
+               [ 0,  0,  0],
+               [ 0, 0, 0]])
+
+ddds=np.array([[ -3,  0,  0],
+               [ 0,  3,  -3],
+               [ -6, -6, -6]])
+dddss=np.array([[ 3,  3,  3],
+               [ 0,  0,  -40],
+               [ 0, 0, -40]])
+
+
+var = pd.DataFrame(data=ddd)
+varss = pd.DataFrame(data=ddds)
+varsss = pd.DataFrame(data=dddss)
+ 
+kupiec(var, rdt_log,varss, rdt_logs,varsss, rdt_logss, "nom de la méthode")
+
+
