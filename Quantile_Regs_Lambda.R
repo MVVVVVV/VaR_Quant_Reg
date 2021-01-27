@@ -9,10 +9,11 @@ rolling_windows = c(250,500,1000,1500, "ERW")
 start_date = "2007-01-03"
 end_date = "2014-12-31"
 my_path = "C:\\Users\\MV\\Desktop\\Projet Quant\\"
+input_assets_path = "C:\\Users\\MV\\Documents\\GitHub\\VaR_Quant_Reg\\Assets\\"
+output_path = "C:\\Users\\MV\\Documents\\GitHub\\VaR_Quant_Reg\\Results_RQ\\"
   
 rdt <- read.csv(paste(my_path,"rdt.csv", sep=""), header=TRUE, row.names="Date")
 #%%%%%%%%%%%%%
-# var <- read csv
 
 start_index = grep(start_date, row.names(rdt))
 end_index = grep(end_date, row.names(rdt))
@@ -58,6 +59,7 @@ for (RW in rolling_windows){
   asset_index = 1
   for(asset in colnames(rdt)){
     
+    var = read.csv(paste(input_assets_path,"models_asset_",(asset_index-1)))
     # les matrices var_predictions comprennent nos prévisions pour cet actif
     # avec en row les dates et en col les differents lambdas
     var_prediction_lasso = matrix(,nrow = nbr_prediction, ncol = length(lambdas))
@@ -73,10 +75,13 @@ for (RW in rolling_windows){
     # la matrice qui va contenir les predictions pour les differents QR par dates
     var_prediction_asset = matrix(,nrow=nbr_prediction, ncol = 7)
     
+    t0 <- Sys.time()
     for (date_row in seq(start_index,end_index, by=1)){
-      start_rol_win = date_row-RW-1
-      if (RW ="ERW"){
+      
+      if (RW =="ERW"){
         start_rol_win = 1
+      }else{
+        start_rol_win = date_row-as.numeric(RW)-1
       }
       end_rol_win = date_row-1
       my_rdt = rdt[start_rol_win:end_rol_win, asset]
@@ -97,8 +102,9 @@ for (RW in rolling_windows){
       
      
     }
+    t1<-Sys.time()
+    print(t1-t0)
     
- 
     tick_loss_per_lamdbda_lasso[asset_index,] =  tick_loss(rdt, var_prediction_lasso, var_quantile)
     tick_loss_per_lambda_ridge[asset_index,] = tick_loss(rdt, var_prediction_ridge, var_quantile)
     tick_loss_per_lambda_elastic[asset_index,] = tick_loss(rdt, var_prediction_elastic, var_quantile)
@@ -106,25 +112,28 @@ for (RW in rolling_windows){
     # on selectionne le meilleure lambda en fct des differents criteres
     index_lasso_bic =which.min(BIC(my_rdt, var_prediction_lasso, var_quantile,
                                   fit_lasso$beta))
-    ridge_cv =11
-    elastic_cv =1
-    lasso_cv =1 
-    ridge_fix =heuristic(lambda=fit_ridge$lambda,
+    index_ridge_cv =which.min(cross_validation(rdt=my_rdt, var = var_prediction_ridge,
+                                               var_quantile = var_quantile))
+    index_elastic_cv =which.min(cross_validation(rdt=my_rdt, var = var_prediction_elastic,
+                                                 var_quantile = var_quantile))
+    index_lasso_cv = which.min(cross_validation(rdt=my_rdt, var = var_prediction_lasso,
+                                                var_quantile = var_quantile))
+    index_ridge_fix =heuristic(lambda=fit_ridge$lambda,
                          betas=fit_ridge$beta[2:.N,] )
-    elastic_fix =heuristic(lambda=fit_elastic$lambda,
+    index_elastic_fix =heuristic(lambda=fit_elastic$lambda,
                            betas=fit_elastic$beta[2:.N,] )
-    lasso_fix =heuristic(lambda=fit_lasso$lambda,
+    index_lasso_fix =heuristic(lambda=fit_lasso$lambda,
                          betas=fit_lasso$beta[2:.N,] )
     
     
     # on ajoute l'asset pour chaque modele
-    var_prediction_all_asset_lasso_bic[, asset_index] = var_prediction_lasso[,index_min_bic]
-    var_prediction_all_asset_ridge_cv[, asset_index] = var_prediction_asset[,"ridge_cv"]
-    var_prediction_all_asset_elastic_cv[, asset_index] = var_prediction_asset[,"elastic_cv"]
-    var_prediction_all_asset_lasso_cv[, asset_index] = var_prediction_asset[,"lasso_cv"]
-    var_prediction_all_asset_ridge_fix[, asset_index] = var_prediction_asset[,"ridge_fix"]
-    var_prediction_all_asset_elastic_fix[, asset_index] = var_prediction_asset[,"elastic_fix"]
-    var_prediction_all_asset_lasso_fix[, asset_index] = var_prediction_asset[,"lasso_fix"]
+    var_prediction_all_asset_lasso_bic[, asset_index] = var_prediction_lasso[,index_lasso_bic]
+    var_prediction_all_asset_ridge_cv[, asset_index] = var_prediction_asset[,index_ridge_cv]
+    var_prediction_all_asset_elastic_cv[, asset_index] = var_prediction_asset[,index_elastic_cv]
+    var_prediction_all_asset_lasso_cv[, asset_index] = var_prediction_asset[,index_lasso_cv]
+    var_prediction_all_asset_ridge_fix[, asset_index] = var_prediction_asset[,index_ridge_fix]
+    var_prediction_all_asset_elastic_fix[, asset_index] = var_prediction_asset[,index_elastic_fix]
+    var_prediction_all_asset_lasso_fix[, asset_index] = var_prediction_asset[,index_lasso_fix]
     
     asset_index = asset_index + 1
   }
@@ -134,25 +143,25 @@ for (RW in rolling_windows){
   tick_loss_per_lambda_elastic_per_RW[index_RW,] = colMeans(tick_loss_per_lambda_elastic)
   
   
-  write.csv(var_prediction_all_asset_lasso_bic, paste(my_path,"Lasso_bic_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_ridge_cv, paste(my_path,"Ridge_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_elastic_cv, paste(my_path,"ELastic_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_lasso_cv, paste(my_path,"Lasso_cv_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_ridge_fix, paste(my_path,"Ridge_fix_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_elastic_fix, paste(my_path,"Elastic_fix_",RW,"RW.csv"))
-  write.csv(var_prediction_all_asset_lasso_fix, paste(my_path,"Lasso_fix_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_lasso_bic, paste(output_path,"Lasso_bic_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_ridge_cv, paste(output_path,"Ridge_cv_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_elastic_cv, paste(output_path,"ELastic_cv_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_lasso_cv, paste(output_path,"Lasso_cv_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_ridge_fix, paste(output_path,"Ridge_fix_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_elastic_fix, paste(output_path,"Elastic_fix_",RW,"RW.csv"))
+  write.csv(var_prediction_all_asset_lasso_fix, paste(output_path,"Lasso_fix_",RW,"RW.csv"))
   
   index_RW = index_RW + 1
 }
 
-write.csv(tick_loss_per_lambda_lasso_per_RW, paste(my_path,"avg_tick_loss_lasso"))
-write.csv(tick_loss_per_lambda_ridge_per_RW, paste(my_path,"avg_tick_loss_ridge"))
-write.csv(tick_loss_per_lambda_elastic_per_RW, paste(my_path,"avg_tick_loss_elastic"))
+write.csv(tick_loss_per_lambda_lasso_per_RW, paste(output_path,"avg_tick_loss_lasso"))
+write.csv(tick_loss_per_lambda_ridge_per_RW, paste(output_path,"avg_tick_loss_ridge"))
+write.csv(tick_loss_per_lambda_elastic_per_RW, paste(output_path,"avg_tick_loss_elastic"))
 
 
 tick_loss<-function(rdt, var, var_quantile){
   hit = var_quantile*sweep(rdt,-var,1, FUN =  "<") * sweep(rdt, var,1, FUN = "-")
-  result = (t(hit) %*% sweep(rdt,var,1,FUN = "-"))/t
+  result = (t(hit) %*% sweep(rdt,var,1,FUN = "-"))/length(rdt)
   
   return (result)
 }
@@ -161,7 +170,7 @@ tick_loss<-function(rdt, var, var_quantile){
 # on utilise bic a minimiser en fct de lambda
 # valable pour le lasso
 BIC <-function(rdt, var, alpha, betas){
-  t <- size(rdt)
+  t <- length(rdt)
   df <- sum(betas!=0)
   result <- log(tick_loss(rdt, var, alpha)) + (log(t)/2*t)*df
   return (result)
@@ -170,8 +179,11 @@ BIC <-function(rdt, var, alpha, betas){
 
 #%%%%%%%%%%%%%%%%%%%%
 # Cross Validation
-cross_validation<-function(alpha, lambda, delta, rdt, rho, qc){
-
+cross_validation<-function(rdt, var, var_quantile){
+  hit = var_quantile*sweep(rdt,-var,1, FUN =  "<") * sweep(rdt, var,1, FUN = "-")
+  result = (t(hit) %*% sweep(rdt,var,1,FUN = "-"))/(length(rdt)-1000)
+  
+  return (result)
 }
 
 
@@ -189,13 +201,6 @@ heuristic<-function(lambda, betas){
   #result<- list(max_lambda, max_index)
   return(max_index)
 }
-
-
-X = matrix(rnorm(1000*100), 1000, 100)
-beta = rnorm(10)
-eps = 4*rnorm(1000)
-y = drop(X[,1:10] %*% beta + eps)# Huber loss
-fit2 = hqreg(X, y, method = "quantile", tau = 0.2)
 
 
 
