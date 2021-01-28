@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 26 21:55:03 2021
+
+@author: antoi
+"""
 
 import numpy as np
 import pandas_datareader as pdr
@@ -14,12 +20,15 @@ def get_rendements(stocks,début,fin): #date=yyyy-mm-dd en string
     prix=prix.iloc[1:]
     return  returns, prix, logrdt
 
-stock=['AAPL','AXP','BA']
-début='2006-01-03'
-fin='2006-01-07'
 
-stocks=['AXP','AAPL','BA']
-stockss=['AXP','BA','AAPL']
+stock=['AAPL','AXP','BA', 'CAT', 'CSCO', 'CVX','DD','DIS','GE','HD','HPQ','IBM','INTC','JNJ','JPM','KO','MCD','MMM','MRK','MSFT','NKE','PFE','PG','RTX','T','TRV','UNH','VZ','WMT','XOM']
+
+début='2007-01-03'
+fin='2014-12-31'
+
+path = r'C:\Users\antoi\OneDrive\Bureau\M2\S2\Quant\NN.xlsx'
+
+df = pd.read_excel(path)
 
 
 outputt=get_rendements(stock, début, fin)
@@ -63,9 +72,9 @@ def kupiec(var_1,rdt_log_1,var_2,rdt_log_2,var_3,rdt_log_3,name):
 
         final=a/p_un
         resu.append(final)
-    
+
+
     val=resu
-    
     values=np.ones(len(rdt_log.columns))*0.005 #ici c'est pour tous les actifs
     plt.figure(figsize=(10, 0.5))
     un=plt.subplot(1,3,1)
@@ -160,25 +169,11 @@ def kupiec(var_1,rdt_log_1,var_2,rdt_log_2,var_3,rdt_log_3,name):
 
     
     plt.show()
- 
 
 
-ddd=np.array([[ 0,  0,  0],
-               [ 0,  0,  0],
-               [ 0, 0, 0]])
 
-ddds=np.array([[ -3,  0,  0],
-               [ 0,  3,  -3],
-               [ -6, -6, -6]])
-dddss=np.array([[ 3,  3,  3],
-               [ 0,  0,  -40],
-               [ 0, 0, -40]])
-
-
-var = pd.DataFrame(data=ddd)
-varss = pd.DataFrame(data=ddds)
-varsss = pd.DataFrame(data=dddss)
+var = df
+varss = df
+varsss = df
  
 kupiec(var, rdt_log,varss, rdt_logs,varsss, rdt_logss, "nom de la méthode")
-
-
